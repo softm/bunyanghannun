@@ -90,6 +90,7 @@ function bindEvents() {
   document.getElementById("sourceButton")?.addEventListener("click", openSourceDialog);
   document.getElementById("footerSourceButton")?.addEventListener("click", openSourceDialog);
   document.getElementById("closeSourceButton")?.addEventListener("click", () => els.sourceDialog.close());
+  document.getElementById("closeWatchButton")?.addEventListener("click", () => els.watchDialog.close());
   document.getElementById("closeDetailButton")?.addEventListener("click", () => els.detailDialog.close());
   document.getElementById("closeInstallButton")?.addEventListener("click", () => els.installDialog.close());
   document.getElementById("installButton")?.addEventListener("click", handleInstallClick);
@@ -526,7 +527,7 @@ async function notifyNewMatches() {
   if (!fresh.length || isAndroidApp() || !("Notification" in window) || Notification.permission !== "granted") return;
   const registration = await navigator.serviceWorker?.ready?.catch(() => null);
   if (!registration) return;
-  await registration.showNotification(`분양한눈 · 새 관심 공고 ${fresh.length}건`, {
+  await registration.showNotification(`청약한눈 · 새 관심 공고 ${fresh.length}건`, {
     body: fresh.length === 1 ? fresh[0].title : `${fresh[0].title} 외 ${fresh.length - 1}건`,
     icon: "./assets/icon-192.png",
     badge: "./assets/icon-192.png",
@@ -546,7 +547,7 @@ function configureInstallEntry() {
   window.addEventListener("appinstalled", () => {
     state.deferredInstallPrompt = null;
     els.installButton.hidden = true;
-    showToast("분양한눈을 홈 화면에 설치했어요.");
+    showToast("청약한눈을 홈 화면에 설치했어요.");
   });
 }
 
@@ -566,7 +567,7 @@ async function handleInstallClick() {
   } else if (/Android/i.test(ua)) {
     els.installGuide.innerHTML = "<p>브라우저 메뉴에서 홈 화면에 추가할 수 있어요.</p><ol><li>오른쪽 위 메뉴를 엽니다.</li><li><strong>홈 화면에 추가</strong> 또는 <strong>앱 설치</strong>를 선택합니다.</li></ol>";
   } else {
-    els.installGuide.innerHTML = "<p>주소창의 설치 아이콘이나 브라우저 메뉴를 이용하세요.</p><ol><li>브라우저 메뉴를 엽니다.</li><li><strong>분양한눈 설치</strong> 또는 <strong>앱 설치</strong>를 선택합니다.</li></ol>";
+    els.installGuide.innerHTML = "<p>주소창의 설치 아이콘이나 브라우저 메뉴를 이용하세요.</p><ol><li>브라우저 메뉴를 엽니다.</li><li><strong>청약한눈 설치</strong> 또는 <strong>앱 설치</strong>를 선택합니다.</li></ol>";
   }
   showDialog(els.installDialog);
 }
