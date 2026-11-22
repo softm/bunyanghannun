@@ -32,5 +32,5 @@ createServer(async (request, response) => {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     response.end("찾을 수 없습니다.");
   }
-}).listen(port, "127.0.0.1", () => console.log(`분양한눈: http://127.0.0.1:${port}/?demo=1`));
+}).listen(port, "127.0.0.1", () => console.log(`청약한눈: http://127.0.0.1:${port}/?demo=1`));
 
