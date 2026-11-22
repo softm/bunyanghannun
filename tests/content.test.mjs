@@ -24,3 +24,8 @@ test("알림 설정 닫기는 조건을 저장하지 않고 창만 닫는다", (
   assert.match(app, /closeWatchButton[^\n]+watchDialog\.close/);
 });
 
+test("모바일 하단 메뉴는 선택한 작업 영역으로 이동한다", () => {
+  assert.match(app, /setView\(button\.dataset\.viewTarget, \{ scroll: true \}\)/);
+  assert.match(app, /options\.scroll \? workspaceTop/);
+});
+
