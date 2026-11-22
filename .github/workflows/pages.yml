@@ -1,24 +1,75 @@
-name: Deploy Pages
+name: Collect official notices and deploy Pages
+
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
 permissions:
   contents: read
-  pages: write
-  id-token: write
+
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: cheongyakhannun-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pages: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: 20}
-      - run: npm run check
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with: {path: dist}
-      - uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Restore the latest official notice snapshot
+        if: github.event_name != 'pull_request'
+        uses: actions/cache/restore@v6
+        with:
+          path: public/data/notices.json
+          key: cheongyak-notices-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cheongyak-notices-v1-
+      - name: Collect official ApplyHome, LH and SH notices
+        if: github.event_name != 'pull_request'
+        env:
+          DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+        run: npm run collect
+      - name: Verify and build the PWA
+        run: npm run verify
+      - name: Save the official notice snapshot
+        if: always() && github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: public/data/notices.json
+          key: cheongyak-notices-v1-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
