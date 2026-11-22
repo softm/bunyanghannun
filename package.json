@@ -1,1 +1,19 @@
-{"name":"bunyanghannun","private":true,"type":"module","scripts":{"build":"node scripts/build.mjs","collect":"node scripts/collect.mjs","check":"node --test tests/*.test.mjs && node scripts/build.mjs"},"engines":{"node":">=20"}}
+{
+  "name": "bunyanghannun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "분양한눈: 청약홈·LH·SH 공고와 접수 일정을 관심조건에 맞춰 알려주는 PWA",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node server/index.mjs",
+    "start": "node server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "collect": "node scripts/collect.mjs",
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs",
+    "verify": "npm test && npm run check && npm run build"
+  }
+}
