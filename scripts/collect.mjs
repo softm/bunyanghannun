@@ -1,5 +1,95 @@
-import{writeFile,mkdir}from'node:fs/promises';const rawKey=process.env.DATA_GO_KR_SERVICE_KEY;if(!rawKey)throw new Error('DATA_GO_KR_SERVICE_KEY is required');let key=rawKey.trim();try{key=decodeURIComponent(key)}catch{}const compact=s=>(s||'').replace(/특별자치도|특별자치시|광역시|특별시/g,'').replace('경기도','경기').trim();
-async function applyHome(){const url=new URL('https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail');Object.entries({page:'1',perPage:'200',serviceKey:key}).forEach(([k,v])=>url.searchParams.set(k,v));const res=await fetch(url);if(!res.ok)throw new Error(`ApplyHome ${res.status}`);const body=await res.json();return(body.data||[]).map(x=>({id:`applyhome-${x.HOUSE_MANAGE_NO}-${x.PBLANC_NO}`,source:'청약홈',name:x.HOUSE_NM,region:compact(x.SUBSCRPT_AREA_CODE_NM),district:(x.HSSPLY_ADRES||'').split(' ')[1]||'',type:x.HOUSE_SECD_NM||x.HOUSE_DTL_SECD_NM,status:'공고',noticeDate:x.RCRIT_PBLANC_DE,applyStart:x.RCEPT_BGNDE||x.SPSPLY_RCEPT_BGNDE,applyEnd:x.RCEPT_ENDDE||x.GNRL_RNK1_CRSPAREA_ENDDE,winnerDate:x.PRZWNER_PRESNATN_DE,households:Number(x.TOT_SUPLY_HSHLDCO)||null,price:null,area:null,url:x.PBLANC_URL||x.HMPG_ADRES||'https://www.applyhome.co.kr/'}))}
-function objects(value,out=[]){if(Array.isArray(value))value.forEach(v=>objects(v,out));else if(value&&typeof value==='object'){if(value.PAN_NM)out.push(value);else Object.values(value).forEach(v=>objects(v,out))}return out}
-async function lh(type){const now=new Date(),end=new Date(now);end.setFullYear(end.getFullYear()+1);const date=d=>d.toISOString().slice(0,10).replaceAll('-','.');const url=new URL('https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1');Object.entries({ServiceKey:key,PG_SZ:'100',PAGE:'1',UPP_AIS_TP_CD:type,PAN_NT_ST_DT:date(new Date(now.getTime()-45*864e5)),CLSG_DT:date(end)}).forEach(([k,v])=>url.searchParams.set(k,v));const res=await fetch(url);if(!res.ok)throw new Error(`LH ${type} ${res.status}`);const rows=objects(await res.json());return rows.map(x=>({id:`lh-${x.PAN_ID||x.RNUM}-${type}`,source:'LH',name:x.PAN_NM,region:compact(x.CNP_CD_NM),district:'',type:x.AIS_TP_CD_NM||x.UPP_AIS_TP_NM,status:x.PAN_SS,noticeDate:(x.PAN_NT_ST_DT||'').replaceAll('.','-'),applyStart:null,applyEnd:(x.CLSG_DT||'').replaceAll('.','-'),winnerDate:null,households:null,price:null,area:null,url:x.DTL_URL||'https://apply.lh.or.kr/'}))}
-const settled=await Promise.allSettled([applyHome(),lh('05'),lh('39')]);const errors=settled.filter(x=>x.status==='rejected').map(x=>x.reason.message);const items=settled.filter(x=>x.status==='fulfilled').flatMap(x=>x.value);if(!items.length)throw new Error(`No official records: ${errors.join(', ')}`);const out={generatedAt:new Date().toISOString(),mode:'live',errors,items};const dest=new URL('../public/data/live.json',import.meta.url);await mkdir(new URL('../public/data/',import.meta.url),{recursive:true});await writeFile(dest,JSON.stringify(out,null,2));console.log(`collected ${items.length}; partial errors ${errors.length}`)
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dedupeNotices, fetchApplyhome, fetchLh, fetchSh } from "./sources.mjs";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const output = resolve(root, "public/data/notices.json");
+const now = new Date().toISOString();
+const key = process.env.DATA_GO_KR_SERVICE_KEY?.trim() || "";
+
+async function previousEnvelope() {
+  try { return JSON.parse(await readFile(output, "utf8")); }
+  catch { return { notices: [], sources: [] }; }
+}
+
+const previous = await previousEnvelope();
+const sourceJobs = [
+  {
+    id: "applyhome",
+    name: "한국부동산원 청약홈",
+    requiresKey: true,
+    officialUrl: "https://www.data.go.kr/data/15098547/openapi.do",
+    run: () => fetchApplyhome(key)
+  },
+  {
+    id: "lh",
+    name: "LH청약플러스",
+    requiresKey: true,
+    officialUrl: "https://www.data.go.kr/data/15058530/openapi.do",
+    run: () => fetchLh(key)
+  },
+  {
+    id: "sh",
+    name: "SH인터넷청약시스템",
+    requiresKey: false,
+    officialUrl: "https://www.i-sh.co.kr/app/lay2/S1T252C253/contents.do",
+    run: () => fetchSh({ pages: 3 })
+  }
+];
+
+const results = [];
+for (const source of sourceJobs) {
+  if (source.requiresKey && !key) {
+    results.push({ source, status: "awaiting_credentials", rows: [], message: "공공데이터포털 인증키 연결 필요" });
+    continue;
+  }
+  try {
+    const rows = await source.run();
+    results.push({ source, status: "ready", rows, message: `${rows.length.toLocaleString("ko-KR")}건 수집` });
+  } catch (error) {
+    results.push({ source, status: "error", rows: [], message: error instanceof Error ? error.message : "수집 실패" });
+  }
+}
+
+const priorBySource = new Map((previous.notices || []).reduce((pairs, notice) => {
+  if (!pairs.some(([id]) => id === notice.source)) pairs.push([notice.source, []]);
+  pairs.find(([id]) => id === notice.source)[1].push(notice);
+  return pairs;
+}, []));
+
+const notices = dedupeNotices(results.flatMap((result) => {
+  if (result.status === "ready") return result.rows;
+  return (priorBySource.get(result.source.id) || []).map((notice) => ({ ...notice, stale: true }));
+}));
+
+const readyCount = results.filter((result) => result.status === "ready").length;
+const awaitingCount = results.filter((result) => result.status === "awaiting_credentials").length;
+const status = readyCount === results.length
+  ? "ready"
+  : readyCount > 0
+    ? "partial"
+    : awaitingCount
+      ? "awaiting_credentials"
+      : "error";
+
+const envelope = {
+  schemaVersion: 1,
+  status,
+  generatedAt: now,
+  noticeCount: notices.length,
+  sources: results.map((result) => ({
+    id: result.source.id,
+    name: result.source.name,
+    status: result.status,
+    fetchedAt: result.status === "ready" ? now : null,
+    message: result.message,
+    officialUrl: result.source.officialUrl
+  })),
+  notices
+};
+
+await mkdir(dirname(output), { recursive: true });
+await writeFile(output, `${JSON.stringify(envelope, null, 2)}\n`);
+console.log(`분양한눈 공식 데이터: ${status}, ${notices.length}건, ${results.map((item) => `${item.source.id}:${item.status}`).join(", ")}`);
+
