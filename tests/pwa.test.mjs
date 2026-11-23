@@ -11,7 +11,7 @@ const build = await readFile(new URL("../scripts/build.mjs", import.meta.url), "
 
 test("첫 문서에 시작 화면과 설치 진입점이 있다", () => {
   assert.match(index, /id="bootSplash"/);
-  assert.match(index, /분양한눈/);
+  assert.match(index, /청약한눈/);
   assert.match(index, /id="installButton"/);
   assert.match(app, /beforeinstallprompt/);
   assert.match(app, /display-mode: standalone/);
