@@ -91,5 +91,5 @@ const envelope = {
 
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, `${JSON.stringify(envelope, null, 2)}\n`);
-console.log(`청약한눈 공식 데이터: ${status}, ${notices.length}건, ${results.map((item) => `${item.source.id}:${item.status}`).join(", ")}`);
+console.log(`분양한눈 공식 데이터: ${status}, ${notices.length}건, ${results.map((item) => `${item.source.id}:${item.status}`).join(", ")}`);
 

@@ -12,13 +12,17 @@ await mkdir(distRoot, { recursive: true });
 await cp(publicRoot, distRoot, { recursive: true });
 
 const hash = createHash("sha256");
-const immutablePaths = ["js", "styles.css"];
+const immutablePaths = ["js", "styles.css", "assets/fonts/SUIT-Variable.woff2"];
 hash.update("bunyanghannun-v1\0");
 for (const path of immutablePaths) await hashPath(resolve(distRoot, path), path);
 const revision = hash.digest("hex").slice(0, 12);
 const versionRoot = resolve(distRoot, "_app", revision);
 await mkdir(versionRoot, { recursive: true });
-for (const path of immutablePaths) await cp(resolve(distRoot, path), resolve(versionRoot, path), { recursive: true });
+for (const path of immutablePaths) {
+  const destination = resolve(versionRoot, path);
+  await mkdir(dirname(destination), { recursive: true });
+  await cp(resolve(distRoot, path), destination, { recursive: true });
+}
 
 for (const name of (await readdir(distRoot)).filter((entry) => entry.endsWith(".html"))) {
   const path = resolve(distRoot, name);
@@ -37,7 +41,7 @@ worker = worker
   .replace("const BUILD_ASSETS=[];", `const BUILD_ASSETS=${JSON.stringify(buildAssets)};`);
 await writeFile(workerPath, worker);
 await writeFile(resolve(distRoot, ".nojekyll"), "");
-console.log(`Built 청약한눈 in dist/; version ${revision}, ${buildAssets.length} immutable assets.`);
+console.log(`Built 분양한눈 in dist/; version ${revision}, ${buildAssets.length} immutable assets.`);
 
 async function hashPath(path, prefix) {
   const entries = await readdir(path, { withFileTypes: true }).catch(() => null);
