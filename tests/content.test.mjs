@@ -30,3 +30,16 @@ test("모바일 하단 메뉴는 선택한 작업 영역으로 이동한다", ()
   assert.match(app, /options\.scroll \? activeTop/);
 });
 
+test("탭과 필터의 선택 상태를 보조기기에 전달한다", () => {
+  assert.match(index, /aria-controls="feedView"/);
+  assert.match(index, /aria-labelledby="feedTab"/);
+  assert.match(app, /aria-pressed/);
+  assert.match(app, /handleTabKeydown/);
+});
+
+test("웹 관심조건과 Android 알림 약속을 구분한다", () => {
+  assert.match(index, /관심조건 저장/);
+  assert.match(app, /웹이 닫혀 있을 때 푸시 알림을 보내지는 않습니다/);
+  assert.doesNotMatch(app, /Notification\.requestPermission/);
+});
+

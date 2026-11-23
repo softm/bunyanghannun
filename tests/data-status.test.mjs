@@ -9,7 +9,7 @@ test("데이터 현황 페이지는 운영 공고 봉투와 세 공식 원천을
     readFile(new URL("data-status.html", root), "utf8"),
     readFile(new URL("data-status.js", root), "utf8")
   ]);
-  assert.match(html, /데이터 수집 현황 — 청약한눈/);
+  assert.match(html, /데이터 수집 현황 — 분양한눈/);
   assert.match(html, /id="applyhome"/);
   assert.match(html, /id="lh"/);
   assert.match(html, /id="sh"/);

@@ -6,6 +6,7 @@ import {
   getDday,
   getNoticePhase,
   matchesWatchProfile,
+  parseDate,
   sanitizeWatchProfile,
   sortNotices
 } from "../public/js/domain.js";
@@ -34,7 +35,13 @@ test("관심 지역과 유형을 모두 만족할 때만 알림 대상이다", (
 
 test("검색·필터·마감 임박 정렬을 결합한다", () => {
   assert.deepEqual(filterNotices(notices, { region: "서울", query: "오늘" }, now).map((item) => item.id), ["1"]);
+  assert.deepEqual(filterNotices(notices, { phase: "active" }, now).map((item) => item.id), ["1", "2"]);
   assert.deepEqual(sortNotices(notices, "deadline", now).map((item) => item.id), ["1", "2", "3"]);
+});
+
+test("존재하지 않는 날짜를 일정으로 허용하지 않는다", () => {
+  assert.equal(parseDate("2026-02-31"), null);
+  assert.ok(parseDate("2026-02-28") instanceof Date);
 });
 
 test("공고 일정을 표준 ICS로 만든다", () => {
