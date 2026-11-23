@@ -178,7 +178,7 @@ export function createNoticeIcs(notice) {
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`,
     `DTSTART;VALUE=DATE:${icsDate(start)}`,
     `DTEND;VALUE=DATE:${icsDate(toDateKey(endDate || end))}`,
-    `SUMMARY:${escapeIcs(`[분양한눈] ${notice.title}`)}`,
+    `SUMMARY:${escapeIcs(`[청약한눈] ${notice.title}`)}`,
     `DESCRIPTION:${escapeIcs(description)}`,
     `URL:${escapeIcs(notice.officialUrl || "")}`,
     "END:VEVENT",
