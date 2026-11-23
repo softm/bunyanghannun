@@ -2,7 +2,7 @@
 
 ## 저장소 경계
 
-- `bunyanghannun`: 분양한눈 공식 데이터 수집기, 정적 PWA, 테스트, Pages 배포
+- `bunyanghannun`: 청약한눈 공식 데이터 수집기, 정적 PWA, 테스트, Pages 배포
 - `bunyanghannun.android`: 운영 PWA를 표시하는 Android 셸, 공통 광고·인앱 업데이트, 네이티브 조건 알림
 
 웹과 Android 앱은 `public/data/notices.json` 계약만 공유합니다. API 인증키는 CI 수집 단계에서만 사용하고 브라우저나 APK에 포함하지 않습니다.
