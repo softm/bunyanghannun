@@ -12,7 +12,7 @@ await mkdir(distRoot, { recursive: true });
 await cp(publicRoot, distRoot, { recursive: true });
 
 const hash = createHash("sha256");
-const immutablePaths = ["js", "styles.css", "assets/fonts/SUIT-Variable.woff2"];
+const immutablePaths = ["js", "adfit-config.js", "styles.css", "assets/fonts/SUIT-Variable.woff2"];
 hash.update("bunyanghannun-v1\0");
 for (const path of immutablePaths) await hashPath(resolve(distRoot, path), path);
 const revision = hash.digest("hex").slice(0, 12);
