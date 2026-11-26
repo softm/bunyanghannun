@@ -16,6 +16,7 @@ import {
   todayKey,
   toDateKey
 } from "./domain.js";
+import { mountBottomAd } from "./adfit.js";
 
 const STORAGE = {
   watch: "cheongyak:watch:v1",
@@ -61,6 +62,7 @@ async function init() {
   bindEvents();
   configureWatchMode();
   configureInstallEntry();
+  mountBottomAd();
   setInitialView();
   document.querySelector("#todayDate").textContent = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "short", timeZone: "Asia/Seoul" }).format(new Date());
   try {
