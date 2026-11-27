@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "청약한눈: 청약홈·LH·SH 공고와 접수 일정을 관심조건에 맞춰 알려주는 PWA",
+  "description": "분양한눈: 공식 신규 분양 단지를 가격·면적·세대수·일정과 함께 비교하는 PWA",
   "engines": {
     "node": ">=20"
   },
