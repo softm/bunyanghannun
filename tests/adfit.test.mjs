@@ -4,13 +4,15 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("청약한눈 전용 PC·모바일 AdFit 단위를 분리한다", async () => {
+test("분양한눈 전용 PC·모바일 AdFit 단위를 분리한다", async () => {
   const config = await read("public/adfit-config.js");
   const units = [...config.matchAll(/unit:\s*"(DAN-[^"]+)"/g)].map((match) => match[1]);
   assert.equal(units.length, 2, "PC 728x90과 모바일 320x100 운영 단위가 모두 필요합니다.");
   assert.equal(new Set(units).size, 2, "PC와 모바일 단위 ID를 재사용하면 안 됩니다.");
   assert.match(config, /hostname:\s*"softm\.github\.io"/);
   assert.match(config, /pathname:\s*"\/bunyanghannun\/"/);
+  assert.match(config, /매체\(NKm\)/);
+  assert.doesNotMatch(config, /DAN-obc38Zd2XD9940os|DAN-c5FSnJxYcJGNguZZ/);
   assert.match(config, /AdMobNative\\\/1/);
 });
 

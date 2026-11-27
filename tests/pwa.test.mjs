@@ -11,7 +11,7 @@ const build = await readFile(new URL("../scripts/build.mjs", import.meta.url), "
 
 test("첫 문서에 시작 화면과 설치 진입점이 있다", () => {
   assert.match(index, /id="bootSplash"/);
-  assert.match(index, /청약한눈/);
+  assert.match(index, /분양한눈/);
   assert.match(index, /id="installButton"/);
   assert.match(app, /beforeinstallprompt/);
   assert.match(app, /display-mode: standalone/);
@@ -20,7 +20,8 @@ test("첫 문서에 시작 화면과 설치 진입점이 있다", () => {
 
 test("매니페스트는 설치·maskable·바로가기를 제공한다", () => {
   assert.equal(manifest.display, "standalone");
-  assert.ok(manifest.id);
+  assert.equal(manifest.id, "/bunyanghannun/");
+  assert.equal(manifest.scope, "/bunyanghannun/");
   assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192"));
   assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
   assert.ok(manifest.icons.some((icon) => String(icon.purpose).includes("maskable")));

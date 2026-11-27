@@ -14,7 +14,7 @@ import {
 const now = new Date("2026-11-22T12:00:00+09:00");
 const notices = [
   { id: "1", title: "서울 오늘 접수", region: "서울", type: "민간분양", publishedAt: "2026-11-20", applyStart: "2026-11-22", applyEnd: "2026-11-22" },
-  { id: "2", title: "경기 예정", region: "경기", type: "공공임대", publishedAt: "2026-11-21", applyStart: "2026-11-25", applyEnd: "2026-11-27" },
+  { id: "2", title: "경기 예정", region: "경기", type: "공공분양", publishedAt: "2026-11-21", applyStart: "2026-11-25", applyEnd: "2026-11-27" },
   { id: "3", title: "부산 마감", region: "부산", type: "오피스텔", publishedAt: "2026-11-01", applyStart: "2026-11-04", applyEnd: "2026-11-05" }
 ];
 
@@ -50,5 +50,6 @@ test("공고 일정을 표준 ICS로 만든다", () => {
   assert.match(ics, /DTSTART;VALUE=DATE:20261125/);
   assert.match(ics, /DTEND;VALUE=DATE:20261128/);
   assert.match(ics, /URL:https:\/\/apply\.lh\.or\.kr\//);
+  assert.match(ics, /\[분양한눈\]/);
 });
 
