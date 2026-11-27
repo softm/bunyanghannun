@@ -2,10 +2,11 @@
 
 ## 저장소 경계
 
-- `bunyanghannun`: 청약한눈 공식 데이터 수집기, 정적 PWA, 테스트, Pages 배포
-- `bunyanghannun.android`: 운영 PWA를 표시하는 Android 셸, 공통 광고·인앱 업데이트, 네이티브 조건 알림
+- `bunyanghannun`: 분양한눈 공식 신규 분양 데이터 수집기, 정적 PWA, 테스트, Pages 배포
+- `bunyanghannun.android`: 분양한눈 운영 PWA를 표시하는 Android 셸, 공통 광고·인앱 업데이트, 네이티브 관심단지 알림
+- `cheongyakhannun`·`cheongyakhannun.android`: 공식 청약 일정·자격 준비 서비스이며 별도 PWA ID, 저장 키, 캐시, 광고와 Android 패키지를 사용
 
-웹과 Android 앱은 `public/data/notices.json` 계약만 공유합니다. API 인증키는 CI 수집 단계에서만 사용하고 브라우저나 APK에 포함하지 않습니다.
+분양한눈 웹과 Android 앱은 `public/data/notices.json` 계약만 공유합니다. 수집 단계에서 임대 유형을 제외하며 API 인증키는 CI에서만 사용하고 브라우저나 APK에 포함하지 않습니다.
 
 ## 데이터 상태
 
@@ -18,5 +19,5 @@
 
 ## 개인정보
 
-첫 버전은 계정을 만들지 않습니다. 관심 지역, 유형, 저장 공고는 브라우저 또는 Android 앱 로컬 저장소에만 보관됩니다. `내 데이터 삭제` 화면에서 이 기기의 로컬 자료를 직접 지울 수 있으며, 외부 SNS 계정이나 서버 보관소는 생성하지 않습니다.
+첫 버전은 계정을 만들지 않습니다. 관심 지역, 분양 유형, 저장 단지는 `bunyanghannun:*` 브라우저 저장 키 또는 Android 앱 전용 저장소에만 보관됩니다. `내 데이터 삭제` 화면에서 이 기기의 로컬 자료를 직접 지울 수 있으며 청약한눈 저장 자료는 건드리지 않습니다.
 

@@ -1,7 +1,7 @@
-# 청약한눈 Kakao AdFit 운영
+# 분양한눈 Kakao AdFit 운영
 
 - AdFit 계정: 승인된 운영 계정
-- 웹 매체: `청약한눈`
+- 웹 매체: `분양한눈`
 - 매체 ID: `NKm`
 - 운영 URL: `https://softm.github.io/bunyanghannun/`
 - PC 하단 728×90: `DAN-iRADVNYvQvGxjcdU`
@@ -12,3 +12,5 @@
 웹 코드는 광고 DOM이나 SDK를 반복 생성하지 않는다. 광고 단위 자체의 소재 갱신은 AdFit 콘솔 설정을 따르며, 하단 광고는 한 지면만 만들고 사용자가 48px 이상의 버튼으로 접고 펼칠 수 있다.
 
 실제 송출은 AdFit 매체 심사와 광고 재고에 따라 달라질 수 있다. 매체 심사 완료 전의 코드 적용·첫 요청과 실제 광고 송출은 구분해 확인한다.
+
+청약한눈 매체 `NKw`와 광고 단위는 별도이며, 이 문서의 `NKm`·`DAN-iRAD...`·`DAN-jT5...` 단위는 `/bunyanghannun/`에서만 사용한다.
