@@ -6,24 +6,17 @@ export const APPLYHOME_ENDPOINTS = [
   ["getAPTLttotPblancDetail", "민간분양"],
   ["getUrbtyOfctlLttotPblancDetail", "오피스텔"],
   ["getRemndrLttotPblancDetail", "무순위"],
-  ["getPblPvtRentLttotPblancDetail", "민간임대"],
   ["getOPTLttotPblancDetail", "임의공급"]
 ];
 
-export const SH_BOARDS = [
-  {
-    category: "공공분양",
-    listUrl: `${SH_ORIGIN}/app/lay2/program/S1T294C296/www/brd/m_244/list.do?multi_itm_seq=1`,
-    detailBase: `${SH_ORIGIN}/app/lay2/program/S1T294C296/www/brd/m_244/view.do`,
-    sequence: "1"
-  },
-  {
-    category: "공공임대",
-    listUrl: `${SH_ORIGIN}/app/lay2/program/S1T294C297/www/brd/m_247/list.do?multi_itm_seq=2`,
-    detailBase: `${SH_ORIGIN}/app/lay2/program/S1T294C297/www/brd/m_247/view.do`,
-    sequence: "2"
-  }
-];
+export const SH_BOARDS = [{
+  category: "공공분양",
+  listUrl: `${SH_ORIGIN}/app/lay2/program/S1T294C296/www/brd/m_244/list.do?multi_itm_seq=1`,
+  detailBase: `${SH_ORIGIN}/app/lay2/program/S1T294C296/www/brd/m_244/view.do`,
+  sequence: "1"
+}];
+
+export const BUNYANG_TYPES = new Set(["민간분양", "공공분양", "오피스텔", "무순위", "임의공급"]);
 
 function text(value) {
   return value == null ? "" : String(value).trim();
@@ -97,7 +90,7 @@ export function normaliseApplyhomeRow(row, category) {
     id: `applyhome:${idParts.join(":")}`,
     source: "applyhome",
     sourceName: "청약홈",
-    title: text(row.HOUSE_NM || row.PBLANC_NM) || "이름 없는 청약 공고",
+    title: text(row.HOUSE_NM || row.PBLANC_NM) || "이름 없는 분양 공고",
     region: regionFrom(address, row.SUBSCRPT_AREA_CODE_NM),
     district: inferDistrict(address),
     address,
@@ -117,8 +110,26 @@ export function normaliseApplyhomeRow(row, category) {
     homepageUrl: text(row.HMPG_ADRES),
     contact: text(row.MDHS_TELNO),
     provider: text(row.BSNS_MBY_NM || row.CNSTRCT_ENTRPS_NM),
+    minAreaSquareMeter: null,
+    maxAreaSquareMeter: null,
+    minPriceTenThousand: null,
+    maxPriceTenThousand: null,
     tags: unique([text(row.HOUSE_SECD_NM), text(row.HOUSE_DTL_SECD_NM), text(row.RENT_SECD_NM), ...flags]),
-    stale: false
+    stale: false,
+    __houseManageNo: text(row.HOUSE_MANAGE_NO),
+    __pblancNo: text(row.PBLANC_NO)
+  };
+}
+
+export function summariseModels(rows = []) {
+  const prices = rows.map((row) => Number(row.LTTOT_TOP_AMOUNT || row.SUPLY_AMOUNT || 0)).filter((value) => Number.isFinite(value) && value > 0);
+  const areas = rows.map((row) => Number(row.SUPLY_AR || 0)).filter((value) => Number.isFinite(value) && value > 0);
+  return {
+    minAreaSquareMeter: areas.length ? Math.min(...areas) : null,
+    maxAreaSquareMeter: areas.length ? Math.max(...areas) : null,
+    minPriceTenThousand: prices.length ? Math.min(...prices) : null,
+    maxPriceTenThousand: prices.length ? Math.max(...prices) : null,
+    housingTypes: unique(rows.map((row) => text(row.HOUSE_TY || row.TP)))
   };
 }
 
@@ -234,7 +245,7 @@ export function parseShBoard(html, board) {
 async function fetchJson(url, options = {}) {
   const response = await fetch(url, {
     ...options,
-    headers: { Accept: "application/json", "User-Agent": "CheongyakHannun/0.1 (+https://softm.github.io/bunyanghannun/)", ...(options.headers || {}) }
+    headers: { Accept: "application/json", "User-Agent": "BunyangHannun/1.0 (+https://softm.github.io/bunyanghannun/)", ...(options.headers || {}) }
   });
   if (!response.ok) throw new Error(`HTTP ${response.status} ${url.origin}${url.pathname}`);
   return response.json();
@@ -262,7 +273,35 @@ export async function fetchApplyhome(serviceKey, options = {}) {
       page += 1;
     }
   }
-  return rows.map(({ __endpoint, ...notice }) => notice);
+  const enriched = [];
+  for (let index = 0; index < rows.length; index += 8) {
+    const batch = rows.slice(index, index + 8);
+    enriched.push(...await Promise.all(batch.map((notice) => enrichApplyhomeNotice(notice, serviceKey))));
+  }
+  return enriched.map(({ __endpoint, __houseManageNo, __pblancNo, ...notice }) => notice).filter(isBunyangNotice);
+}
+
+async function enrichApplyhomeNotice(notice, serviceKey) {
+  const modelEndpoint = notice.__endpoint === "getAPTLttotPblancDetail"
+    ? "getAPTLttotPblancMdl"
+    : notice.__endpoint === "getUrbtyOfctlLttotPblancDetail"
+      ? "getUrbtyOfctlLttotPblancMdl"
+      : "";
+  if (!modelEndpoint || !notice.__houseManageNo || !notice.__pblancNo) return notice;
+  try {
+    const url = new URL(`${APPLYHOME_BASE}/${modelEndpoint}`);
+    url.searchParams.set("page", "1");
+    url.searchParams.set("perPage", "100");
+    url.searchParams.set("returnType", "JSON");
+    url.searchParams.set("serviceKey", serviceKey);
+    url.searchParams.set("cond[HOUSE_MANAGE_NO::EQ]", notice.__houseManageNo);
+    url.searchParams.set("cond[PBLANC_NO::EQ]", notice.__pblancNo);
+    const payload = await fetchJson(url);
+    const summary = summariseModels(Array.isArray(payload.data) ? payload.data : []);
+    return { ...notice, ...summary, tags: unique([...(notice.tags || []), ...summary.housingTypes]) };
+  } catch {
+    return notice;
+  }
 }
 
 export async function fetchLh(serviceKey, options = {}) {
@@ -285,7 +324,7 @@ export async function fetchLh(serviceKey, options = {}) {
       if (rows.length < 100) break;
     }
   }
-  return all;
+  return all.filter(isBunyangNotice);
 }
 
 export async function fetchSh(options = {}) {
@@ -309,7 +348,7 @@ export async function fetchSh(options = {}) {
         body,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-          "User-Agent": "CheongyakHannun/0.1 (+https://softm.github.io/bunyanghannun/)"
+          "User-Agent": "BunyangHannun/1.0 (+https://softm.github.io/bunyanghannun/)"
         }
       });
       if (!response.ok) throw new Error(`HTTP ${response.status} SH ${board.category}`);
@@ -328,5 +367,9 @@ export function dedupeNotices(notices) {
   return [...byId.values()].sort((a, b) =>
     String(b.publishedAt || "").localeCompare(String(a.publishedAt || "")) || String(a.title).localeCompare(String(b.title), "ko-KR")
   );
+}
+
+export function isBunyangNotice(notice) {
+  return Boolean(notice && BUNYANG_TYPES.has(notice.type));
 }
 

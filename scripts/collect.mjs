@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dedupeNotices, fetchApplyhome, fetchLh, fetchSh } from "./sources.mjs";
+import { dedupeNotices, fetchApplyhome, fetchLh, fetchSh, isBunyangNotice } from "./sources.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = resolve(root, "public/data/notices.json");
@@ -61,7 +61,7 @@ const priorBySource = new Map((previous.notices || []).reduce((pairs, notice) =>
 const notices = dedupeNotices(results.flatMap((result) => {
   if (result.status === "ready") return result.rows;
   return (priorBySource.get(result.source.id) || []).map((notice) => ({ ...notice, stale: true }));
-}));
+}).filter(isBunyangNotice));
 
 const readyCount = results.filter((result) => result.status === "ready").length;
 const awaitingCount = results.filter((result) => result.status === "awaiting_credentials").length;
@@ -91,5 +91,5 @@ const envelope = {
 
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, `${JSON.stringify(envelope, null, 2)}\n`);
-console.log(`청약한눈 공식 데이터: ${status}, ${notices.length}건, ${results.map((item) => `${item.source.id}:${item.status}`).join(", ")}`);
+console.log(`분양한눈 공식 분양 데이터: ${status}, ${notices.length}건, ${results.map((item) => `${item.source.id}:${item.status}`).join(", ")}`);
 

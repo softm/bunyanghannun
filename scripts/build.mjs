@@ -41,7 +41,7 @@ worker = worker
   .replace("const BUILD_ASSETS=[];", `const BUILD_ASSETS=${JSON.stringify(buildAssets)};`);
 await writeFile(workerPath, worker);
 await writeFile(resolve(distRoot, ".nojekyll"), "");
-console.log(`Built 청약한눈 in dist/; version ${revision}, ${buildAssets.length} immutable assets.`);
+console.log(`Built 분양한눈 in dist/; version ${revision}, ${buildAssets.length} immutable assets.`);
 
 async function hashPath(path, prefix) {
   const entries = await readdir(path, { withFileTypes: true }).catch(() => null);
