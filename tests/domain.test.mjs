@@ -31,6 +31,7 @@ test("관심 지역과 유형을 모두 만족할 때만 알림 대상이다", (
   assert.equal(matchesWatchProfile(notices[0], profile), true);
   assert.equal(matchesWatchProfile(notices[1], profile), false);
   assert.deepEqual(sanitizeWatchProfile({ enabled: true, regions: ["잘못된지역"], types: ["민간분양", "가짜"] }).regions, []);
+  assert.deepEqual(sanitizeWatchProfile({ enabled: true, regions: ["광주", "전남"], types: ["민간분양"] }).regions, ["광주특별시"]);
 });
 
 test("검색·필터·마감 임박 정렬을 결합한다", () => {

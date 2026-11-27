@@ -28,6 +28,16 @@ test("LH 공고의 기관·유형·마감일을 정규화한다", () => {
   assert.equal(notice.applyEnd, "2026-12-01");
 });
 
+test("통합 행정구역은 법정 약칭 광주특별시로 정규화한다", () => {
+  const applyhome = normaliseApplyhomeRow({
+    HOUSE_MANAGE_NO: "GJ-1", PBLANC_NO: "GJ-1", HOUSE_NM: "광주 테스트 단지",
+    HSSPLY_ADRES: "전남광주통합특별시 광산구 하산동", SUBSCRPT_AREA_CODE_NM: "전남광주통합특별시"
+  }, "민간분양");
+  const lh = normaliseLhRow({ PAN_ID: "GJ-2", PAN_NM: "광주 공공분양", CNP_CD_NM: "전남광주통합" });
+  assert.equal(applyhome.region, "광주특별시");
+  assert.equal(lh.region, "광주특별시");
+});
+
 test("SH 분양 게시판에서 모집공고만 추출하고 결과 공지는 제외한다", () => {
   const notices = parseShBoard(shHtml, SH_BOARDS[0]);
   assert.equal(notices.length, 1);
